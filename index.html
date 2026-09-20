@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>행운의 1~9번 돌림판</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 16px;
+      background: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    }
+    h2 {
+      margin: 0 0 20px 0;
+      color: #212529;
+      font-size: 24px;
+    }
+    .roulette-container {
+      position: relative;
+      width: 85vw;
+      max-width: 320px;
+      height: 85vw;
+      max-height: 320px;
+    }
+    .pointer {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 24px solid #e03131;
+      z-index: 10;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      transition: transform 4s cubic-bezier(0.12, 0.9, 0.18, 1);
+    }
+    .controls {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    button {
+      width: 200px;
+      height: 52px;
+      font-size: 19px;
+      font-weight: 700;
+      color: #ffffff;
+      background-color: #3b5bdb;
+      border: none;
+      border-radius: 26px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(59, 91, 219, 0.35);
+      transition: transform 0.1s, background-color 0.2s;
+    }
+    button:active:not(:disabled) {
+      transform: scale(0.96);
+      background-color: #2f49aa;
+    }
+    button:disabled {
+      background-color: #ced4da;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #1c7ed6;
+      min-height: 30px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎯 행운의 돌림판</h2>
+
+  <div class="roulette-container">
+    <div class="pointer"></div>
+    <canvas id="wheel" width="640" height="640"></canvas>
+  </div>
+
+  <div class="controls">
+    <button id="spinBtn" onclick="spinWheel()">돌리기!</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const items = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const colors = [
+      "#ff922b", "#fab005", "#51cf66", 
+      "#20c997", "#339af0", "#4c6ef5", 
+      "#845ef7", "#cc5de8", "#f06595"
+    ];
+    
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const spinBtn = document.getElementById("spinBtn");
+    const resultDiv = document.getElementById("result");
+
+    const totalSlices = items.length;
+    const arc = (2 * Math.PI) / totalSlices;
+    const radius = canvas.width / 2;
+    let currentRotation = 0;
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < totalSlices; i++) {
+        const angle = i * arc;
+        
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, angle, angle + arc);
+        ctx.fill();
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 38px sans-serif";
+        ctx.shadowColor = "rgba(0,0,0,0.25)";
+        ctx.shadowBlur = 6;
+        ctx.fillText(items[i] + "번", radius - 45, 14);
+        ctx.restore();
+      }
+
+      // 중앙 원 장식
+      ctx.beginPath();
+      ctx.arc(radius, radius, 40, 0, 2 * Math.PI);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+    }
+
+    drawWheel();
+
+    function spinWheel() {
+      spinBtn.disabled = true;
+      resultDiv.innerText = "";
+
+      const extraSpins = 5 + Math.floor(Math.random() * 5);
+      const randomAngle = Math.floor(Math.random() * 360);
+      const targetRotation = currentRotation + (extraSpins * 360) + randomAngle;
+
+      canvas.style.transform = `rotate(${targetRotation}deg)`;
+      currentRotation = targetRotation;
+
+      setTimeout(() => {
+        const normalizedDeg = (currentRotation % 360 + 360) % 360;
+        const pointerAngle = (270 - normalizedDeg + 360) % 360;
+        const sliceAngle = 360 / totalSlices;
+        const winningIndex = Math.floor(pointerAngle / sliceAngle);
+
+        resultDiv.innerText = `🎉 [ ${items[winningIndex]}번 ] 당첨!`;
+        spinBtn.disabled = false;
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
